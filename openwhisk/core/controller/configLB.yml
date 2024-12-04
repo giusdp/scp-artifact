@@ -1,0 +1,37 @@
+- default:
+  - workers:
+    - wrk: "worker3"
+      invalidate:
+        - max_concurrent_invocations: 50
+    - wrk: "worker2"
+    strategy: platform
+    invalidate:
+      - max_concurrent_invocations: 100
+      - capacity_used: 50
+  - workers:
+    - wrk: "worker3"
+    - wrk: "worker2"
+    strategy: random
+  - workers:
+    - wrk: "worker2"
+  strategy: "random"
+- mongoDB:
+  - controller: "controller2"
+    workers:
+    - set:
+    topology_tolerance: "all"
+    strategy: random
+  - controller: "controller1"
+    workers:
+    - set: "set1"
+      strategy: random
+      invalidate:
+        - capacity_used: 30
+    - set: "set2"
+      strategy: platform
+    - set:
+      strategy: random
+    topology_tolerance: "none"
+    strategy: best-first
+  strategy: random
+  followup: default
