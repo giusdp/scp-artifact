@@ -78,6 +78,12 @@ nano credentials.json
 
 Then paste the content and save the file.
 
+If missing, create a ssh key pair named `ow-gcp-key`:
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "ow-gcp-key" -f ow-gcp-key
+```
+
 Finally, initialize the providers:
 
 ```bash
