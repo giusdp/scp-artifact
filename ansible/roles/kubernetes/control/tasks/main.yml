@@ -1,0 +1,64 @@
+---
+- name: install kubectl
+  apt:
+    name: kubectl
+    state: present
+    force: yes
+
+# - name: update kubelet advertised address
+#   shell: |
+#     sed -Ein "s/Environment=\"KUBELET_CONFIG_ARGS=[^\"]*/& --node-ip=10.8.0.1/" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+- name: restart kubelet
+  systemd:
+    name: kubelet
+    state: restarted
+    daemon_reload: true
+
+- name: initialize the cluster
+  shell: kubeadm init --cri-socket=unix:///var/run/cri-dockerd.sock >> cluster_initialized.txt
+  args:
+    chdir: $HOME
+    creates: cluster_initialized.txt
+
+- name: create .kube directory
+  become_user: "{{ ansible_user }}"
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0700
+
+- name: copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ ansible_user }}/.kube/config"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0700
+
+# - name: download flannel manifest
+#   become_user: "{{ ansible_user }}"
+#   get_url:
+#     url: https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+#     dest: ~/kube-flannel.yml
+
+# - name: update flannel network interface to tun0
+#   become_user: "{{ ansible_user }}"
+#   shell: |
+#     yq -i '(. | select (.kind == "DaemonSet") | .spec.template.spec.containers.[] | select (.name == "kube-flannel") | .args) += "--iface=tun0"' kube-flannel.yml
+
+- name: install Pod network
+  become_user: "{{ ansible_user }}"
+  shell: kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml >> pod_network_setup.txt
+  args:
+    chdir: $HOME
+    creates: pod_network_setup.txt
+
+- name: get join command
+  shell: kubeadm token create --print-join-command
+  register: join_command_raw
+
+- name: set join command
+  set_fact:
+    join_command: "{{ join_command_raw.stdout_lines[0] }} --cri-socket=unix:///var/run/cri-dockerd.sock"

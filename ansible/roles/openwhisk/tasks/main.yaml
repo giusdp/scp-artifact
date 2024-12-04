@@ -1,0 +1,78 @@
+---
+- name: Apply labels for openwhisk nodes
+  become_user: "{{ ansible_user }}"
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Node
+      metadata:
+        name: eu-worker
+        labels:
+          openwhisk-role: "invoker"
+          zone: "europe"
+
+- name: Apply labels for openwhisk nodes
+  become_user: "{{ ansible_user }}"
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Node
+      metadata:
+        name: eu-controller
+        labels:
+          openwhisk-role: "core"
+          zone: "europe"
+
+- name: Apply labels for openwhisk nodes
+  become_user: "{{ ansible_user }}"
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Node
+      metadata:
+        name: us-controller
+        labels:
+          openwhisk-role: "core"
+          zone: "usa"
+
+- name: Apply labels for openwhisk nodes
+  become_user: "{{ ansible_user }}"
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Node
+      metadata:
+        name: us-worker
+        labels:
+          openwhisk-role: "invoker"
+          zone: "usa"
+
+- name: Clone openwhisk-deploy-kube
+  become_user: "{{ ansible_user }}"
+  ansible.builtin.git:
+    repo: https://github.com/mattrent/openwhisk-deploy-kube.git
+    dest: ~/openwhisk-deploy-kube
+
+- name: Copy mycluster.yaml into openwhisk-deploy-kube
+  become_user: "{{ ansible_user }}"
+  copy:
+    src: ../../../mycluster.yaml
+    dest: ~/openwhisk-deploy-kube/
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Copy myruntimes.json into openwhisk-deploy-kube/
+  become_user: "{{ ansible_user }}"
+  copy:
+    src: ../../../myruntimes.json
+    dest: ~/openwhisk-deploy-kube/helm/openwhisk/
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Install Openwhisk with helm
+  become_user: "{{ ansible_user }}"
+  shell: helm install owdev ~/openwhisk-deploy-kube/helm/openwhisk --namespace openwhisk --create-namespace -f ~/openwhisk-deploy-kube/mycluster.yaml

@@ -1,0 +1,41 @@
+---
+- name: install curl
+  apt:
+    name: curl
+    state: present
+    update_cache: true
+
+- name: create /etc/apt/keyrings
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: add Kubernetes key
+  shell: curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: add Kubernetes repo
+  shell: echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+
+- name: install kubelet
+  apt:
+    name: kubelet
+    state: present
+    update_cache: true
+
+- name: install kubeadm
+  apt:
+    name: kubeadm
+    state: present
+
+- name: install yq
+  get_url:
+    url: https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+    dest: /usr/bin/yq
+    mode: "0755"
+
+- name: install nfs-common
+  apt:
+    name: nfs-common
+    state: present
+    update_cache: true
