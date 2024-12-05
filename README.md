@@ -121,6 +121,17 @@ The tool will generate a `request_statistic.csv` file with the results of the be
 
 #### tAPP Configurations
 
+During the setup, a task will configure OpenWhisk with the following tAPP script:
+
+```yaml
+- data:
+    - controller: "eu-controller"
+      workers:
+        - wrk: "eu-worker"
+      topology_tolerance: "all"
+  followup: default
+```
+
 To change and try different tAPP configurations, you can 
 configure different policies in the `configLB.yml` file located in the OpenWhisk controller persistent volume claims.
 
